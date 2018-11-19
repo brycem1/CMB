@@ -51,7 +51,7 @@ n_B = 1.3
 B_l = 1.0E-9
 Bl = B_l*(1.E9)
 
-
+#Loads pre made transfer pickle files from transfer.py for ell<1000 at del_l=10
 data = pickle.load(open("../transfer.pkl","rb"))
 ell_array = data['ell']
 k_array = data['k']
@@ -59,7 +59,7 @@ Tl_m1k = data['Tl_m1k']
 Tl_p1k = data['Tl_p1k']
 T1lk = data['T1lk'] 
 
-
+#Loads pre made transfer pickle files from transfer.py for ell>=1000 at del_l=100
 data1 = pickle.load(open("../transfer100.pkl","rb"))
 ell_array1 = data1['ell']
 k_array1 = data1['k']
@@ -97,6 +97,7 @@ BB_lensedCL = lensedCL[:,2]
 ell_test = np.arange(totCL.shape[0])
 Cl_EE = np.nan_to_num((EE_lensedCL * 2*np.pi)/(ell_test*(ell_test+1.)))
 
+#This is to calculate ClBB_rot after Claa is calculated for del_l=10
 def GimmeClBBRot(clee, l_aa, claa, dl=10, n=1024, nwanted=500):
 	lxgrid, lygrid  = np.meshgrid(np.arange(-n/2.,n/2.)*dl, np.arange(-n/2.,n/2.)*dl )
 	lgrid = np.sqrt(lxgrid**2 + lygrid**2)
@@ -134,13 +135,13 @@ def k_D(nb,B_lamba):
 def del_m2(k,nb,Blamba):
     return k**2.*S_0(nb,Blamba)*k**n_B*((3*c_cgs**2.)/(16*np.pi**2.*e_cgs*f_cgs**2.))**2.
 
-#quad?
+#Calculates Claa from transfer pickle file for del_l=10 and l<1000
 @numba.jit
 def Cl_aa_integrand(k_index,l_index,nb,B_lamba):
     k = k_array[k_index]
     l = ell_array[l_index]
     return del_m2(k,nb,B_lamba)*((l/(2.*l+1))*Tl_m1k[l_index,k_index]**2.+((l+1)/(2.*l+1))*Tl_p1k[l_index,k_index]**2.-T1lk[l_index,k_index]**2.)
-
+#Spline for del_l=10 and l<1000
 def Cl_aa_spline(l_index,nb,B_lamba):
     integrand = []
     for jj in range(len(k_array)):
@@ -154,12 +155,14 @@ def Cl_aa_spline(l_index,nb,B_lamba):
 #    sp = UnivariateSpline(k_array, abs_integrand, k=1, s=0)
 #    return sp.integral(k_array[np.argmax(abs_integrand)],k_array[-1])
 
+#Calculates Claa from transfer pickle file for del_l=100 and l>=1000
 @numba.jit
 def Cl_aa_integrand1(k_index,l_index,nb,B_lamba):
     k = k_array1[k_index]
     l = ell_array1[l_index]
     return del_m2(k,nb,B_lamba)*((l/(2.*l+1))*Tl_m1k1[l_index,k_index]**2.+((l+1)/(2.*l+1))*Tl_p1k1[l_index,k_index]**2.-T1lk1[l_index,k_index]**2.)
 
+#Spline for del_l=100 and l>=1000
 @numba.jit
 def Cl_aa_spline1(l_index,nb,B_lamba):
     integrand = []
